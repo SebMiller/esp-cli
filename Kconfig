@@ -1,0 +1,88 @@
+menuconfig CLI_ENABLED
+    bool "CLI"
+    help
+        "Select this option to enable the Command Line Interface."
+
+config CLI_TASK_NAME
+    string "CLI task name"
+    depends on CLI_ENABLED
+    default "cli"
+    help
+        "CLI task name."
+
+config CLI_TASK_STACK
+    int "CLI task stack size"
+    depends on CLI_ENABLED
+    default 2048
+    help
+        "CLI task stack size."
+
+config CLI_TASK_PRI
+    int "CLI task priority"
+    depends on CLI_ENABLED
+    default 1
+    help
+        "CLI task priority."
+
+config CLI_ANSI_ESCAPE_CODE_ENABLED
+    bool "Enable the use of ANSI escape codes"
+    depends on CLI_ENABLED
+    default n
+    help
+        "ANSI escape codes enable the use of arrows, DEL and INS keyboard buttons."
+
+config CLI_HISTORY_ENABLED
+    bool "Enable command history"
+    depends on CLI_ENABLED && CLI_ANSI_ESCAPE_CODE_ENABLED
+    default n
+    help
+        "Enable command history."
+
+config CLI_HISTORY_LEN
+    int "Command history size"
+    depends on CLI_HISTORY_ENABLED
+    default 64
+    help
+        "Maximum number of commands kept in history."
+
+config CLI_MAX_LEN
+    int "Command line maximum length"
+    depends on CLI_ENABLED
+    default 128
+    help
+        "Maximum length of the command line (including command and parameters)."
+
+config CLI_AUTOCOMPLETE_ENABLED
+    bool "Enable auto-completion"
+    depends on CLI_ENABLED
+    default y
+    help
+        "Enable command auto-completion."
+
+config CLI_ALLOW_COMMAND_ADDITION
+    bool "Include macros for creating custom commands"
+    depends on CLI_ENABLED
+    default n
+    help
+        "Expose macro functions that can be used to create custom CLI commands."
+
+config CLI_ALLOW_COMMAND_RUN
+    bool "Include macros for running and calling commands"
+    depends on CLI_ENABLED
+    default n
+    help
+        "Expose macro functions that can be used to run a command or call a command function directly frm user code."
+
+menuconfig CLI_USE_BUILTIN_COMMANDS
+    bool "Include CLI commands from the CLI component"
+    depends on CLI_ENABLED
+    default y
+    help
+        "Include all or some of the CLI commands implemented in the CLI component."
+
+    config CLI_USE_CMD_SYSTEM
+        bool "System commands"
+        depends on CLI_USE_BUILTIN_COMMANDS
+        default y
+        help
+            "Include system commands."
