@@ -20,10 +20,16 @@
 
 
 static bool bluetooth_cmd_ble_is_inited = false;
+static bool bluetooth_cmd_bt_classic_is_released = false;
 static bool bluetooth_cmd_controller_is_inited = false;
 static bool bluetooth_cmd_controller_is_enabled = false;
 static bool bluetooth_cmd_bluedroid_is_inited = false;
 static bool bluetooth_cmd_bluedroid_is_enabled = false;
+static bool bluetooth_cmd_gap_evt_handler_registered = false;
+
+
+static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+
 
 CLI_CMD(ble) {
     if ( CMD_HAS_ARG_AT(1, "on") ) {
@@ -43,6 +49,14 @@ CLI_CMD(ble) {
             return CLI_CMD_RETURN_ERROR;
         }
 
+        if ( !bluetooth_cmd_bt_classic_is_released ) {
+            ret = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+            if (ret) {
+                cli_printf("BT classic mem release failed\n");
+                return CLI_CMD_RETURN_ERROR;
+            }
+            bluetooth_cmd_bt_classic_is_released = true;
+        }
         if ( !bluetooth_cmd_controller_is_inited ) {
             esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
             ret = esp_bt_controller_init(&bt_cfg);
@@ -76,6 +90,14 @@ CLI_CMD(ble) {
             }
             bluetooth_cmd_bluedroid_is_enabled = true;
         }
+        if ( !bluetooth_cmd_gap_evt_handler_registered ) {
+            ret = esp_ble_gap_register_callback(gap_event_handler);
+            if (ret){
+                cli_printf("GAP event handler register failed\n");
+                return CLI_CMD_RETURN_ERROR;
+            }
+            bluetooth_cmd_gap_evt_handler_registered = true;
+        }
 
         bluetooth_cmd_ble_is_inited = true;
 
@@ -97,5 +119,130 @@ CLI_CMD(ble) {
 
     return CLI_CMD_RETURN_ARG_ERROR;
 }
+
+
+static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
+    switch (event) {
+        case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_RESULT_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_RESULT_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_ADV_START_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_START_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_START_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_AUTH_CMPL_EVT: {
+            cli_printf("ESP_GAP_BLE_AUTH_CMPL_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_KEY_EVT: {
+            cli_printf("ESP_GAP_BLE_KEY_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SEC_REQ_EVT: {
+            cli_printf("ESP_GAP_BLE_SEC_REQ_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: {
+            cli_printf("ESP_GAP_BLE_PASSKEY_NOTIF_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_PASSKEY_REQ_EVT: {
+            cli_printf("ESP_GAP_BLE_PASSKEY_REQ_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_OOB_REQ_EVT: {
+            cli_printf("ESP_GAP_BLE_OOB_REQ_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_LOCAL_IR_EVT: {
+            cli_printf("ESP_GAP_BLE_LOCAL_IR_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_LOCAL_ER_EVT: {
+            cli_printf("ESP_GAP_BLE_LOCAL_ER_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_NC_REQ_EVT: {
+            cli_printf("ESP_GAP_BLE_NC_REQ_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SCAN_STOP_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SCAN_STOP_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SET_STATIC_RAND_ADDR_EVT: {
+            cli_printf("ESP_GAP_BLE_SET_STATIC_RAND_ADDR_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: {
+            cli_printf("ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_READ_RSSI_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_READ_RSSI_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_ADD_WHITELIST_COMPLETE_EVT: {
+            cli_printf("ESP_GAP_BLE_ADD_WHITELIST_COMPLETE_EVT\n");
+        }
+        break;
+        case ESP_GAP_BLE_EVT_MAX: {
+            cli_printf("ESP_GAP_BLE_EVT_MAX\n");
+        }
+        break;
+        default:
+        break;
+    }
+}
+
 
 #endif
