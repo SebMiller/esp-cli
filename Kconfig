@@ -86,3 +86,10 @@ menuconfig CLI_USE_BUILTIN_COMMANDS
         default y
         help
             "Include system commands."
+
+    config CLI_USE_CMD_BLUETOOTH
+        bool "Bluetooth commands"
+        depends on CLI_USE_BUILTIN_COMMANDS
+        default y
+        help
+            "Include bluetooth commands."
