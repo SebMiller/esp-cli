@@ -12,7 +12,6 @@
 #include "esp_bt.h"
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
-#include "esp_bt_device.h"
 #include "esp_gap_ble_api.h"
 #include "esp_gatt_defs.h"
 #include "esp_gatt_common_api.h"
@@ -31,13 +30,23 @@ static bool bluetooth_cmd_gap_evt_handler_registered = false;
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 
 
+static esp_ble_adv_params_t adv_params = {
+    .adv_int_min        = 0x0020,
+    .adv_int_max        = 0x0800,
+    .adv_type           = ADV_TYPE_SCAN_IND,
+    .own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
+    .channel_map        = ADV_CHNL_ALL,
+    .adv_filter_policy  = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY
+};
+
+
 CLI_CMD(ble) {
     if ( CMD_HAS_ARG_AT(1, "on") ) {
         esp_err_t ret;
 
         if ( CMD_HAS_ARG("-h") ) {
-            cli_printf("Usage: %s on [OPTION]...\n", argv[0]);
-            cli_printf("initialize and start the bluetooth controller and stack.\n");
+            cli_printf("Usage: %s %s [OPTION]...\n", argv[0], argv[1]);
+            cli_printf("Initialize and start the bluetooth controller and stack.\n");
             cli_printf("\n");
             cli_printf("OPTION:\n");
             cli_printf("  -h: show this help.\n");
@@ -92,7 +101,7 @@ CLI_CMD(ble) {
         }
         if ( !bluetooth_cmd_gap_evt_handler_registered ) {
             ret = esp_ble_gap_register_callback(gap_event_handler);
-            if (ret){
+            if (ret) {
                 cli_printf("GAP event handler register failed\n");
                 return CLI_CMD_RETURN_ERROR;
             }
@@ -102,6 +111,38 @@ CLI_CMD(ble) {
         bluetooth_cmd_ble_is_inited = true;
 
         cli_printf("BLE is now on\n");
+
+        return CLI_CMD_RETURN_OK;
+    }
+    else if ( CMD_HAS_ARG_AT(1, "adv") ) {
+        esp_err_t ret;
+
+        if ( CMD_HAS_ARG("-h") ) {
+            cli_printf("Usage: %s %s [OPTION]...\n", argv[0], argv[1]);
+            cli_printf("Start BLE advertising.\n");
+            cli_printf("\n");
+            cli_printf("OPTION:\n");
+            cli_printf("  -h: show this help.\n");
+            cli_printf("  -n NAME: the device name (will default to ESP_CLI_BLE if not specified).\n");
+            return CLI_CMD_RETURN_OK;
+        }
+
+        if ( CMD_HAS_ARG("-n") ) {
+            ret = esp_ble_gap_set_device_name( CMD_ARG_VALUE("-n") );
+        }
+        else {
+            ret = esp_ble_gap_set_device_name("ESP_CLI_BLE");
+        }
+        if (ret) {
+            cli_printf("GAP set device name failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
+        ret = esp_ble_gap_start_advertising(&adv_params);
+        if (ret) {
+            cli_printf("GAP start advertising failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
 
         return CLI_CMD_RETURN_OK;
     }
