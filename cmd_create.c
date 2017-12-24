@@ -20,3 +20,12 @@ bool get_argv_has_option(const char* option, int argc, char* argv[]) {
     }
     return false;
 }
+
+bool get_argv_has_option_at(int index, const char* option, int argc, char* argv[]) {
+    if ( argc > index ) {
+        if ( strcmp(option, argv[index]) == 0 ) {
+            return true;
+        }
+    }
+    return false;
+}

@@ -202,6 +202,7 @@ Notice that running a command asynchronously will sometimes mess the output a li
 
 Two utility functions are available to simply parse command arguments:
 - `CMD_HAS_ARG(option)`: Returns a boolean that indicates if the option (given as a string) is passed to the command.
+- `CMD_HAS_ARG_AT(index, option)`: Same as above, but checks only at the given index (index 1 is the first argument passed to the command, index 2 the second, etc...).
 - `CMD_ARG_VALUE(option)`: Returns a pointer to the value of the option (basically a pointer to the `argv` entry following the one of the option), or a pointer to an empty string if nothing is found.
 
 ```c

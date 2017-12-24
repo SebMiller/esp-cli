@@ -43,9 +43,11 @@ typedef struct cli_funct_info_s {
 
 
 bool get_argv_has_option(const char* option, int argc, char* argv[]);
+bool get_argv_has_option_at(int index, const char* option, int argc, char* argv[]);
 char* get_argv_option_value(const char* option, int argc, char* argv[]);
 
 #define CMD_HAS_ARG(option) get_argv_has_option(option, argc, argv)
+#define CMD_HAS_ARG_AT(index, option) get_argv_has_option_at(index, option, argc, argv)
 #define CMD_ARG_VALUE(option) get_argv_option_value(option, argc, argv)
 
 
