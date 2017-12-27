@@ -50,6 +50,7 @@ CLI_CMD(ble) {
             cli_printf("\n");
             cli_printf("OPTION:\n");
             cli_printf("  -h: show this help.\n");
+            cli_printf("  -n NAME: the device name (will default to ESP_CLI_BLE if not specified).\n");
             return CLI_CMD_RETURN_OK;
         }
 
@@ -108,6 +109,17 @@ CLI_CMD(ble) {
             bluetooth_cmd_gap_evt_handler_registered = true;
         }
 
+        if ( CMD_HAS_ARG("-n") ) {
+            ret = esp_ble_gap_set_device_name( CMD_ARG_VALUE("-n") );
+        }
+        else {
+            ret = esp_ble_gap_set_device_name("ESP_CLI_BLE");
+        }
+        if (ret) {
+            cli_printf("GAP set device name failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
         bluetooth_cmd_ble_is_inited = true;
 
         cli_printf("BLE is now on\n");
@@ -123,19 +135,7 @@ CLI_CMD(ble) {
             cli_printf("\n");
             cli_printf("OPTION:\n");
             cli_printf("  -h: show this help.\n");
-            cli_printf("  -n NAME: the device name (will default to ESP_CLI_BLE if not specified).\n");
             return CLI_CMD_RETURN_OK;
-        }
-
-        if ( CMD_HAS_ARG("-n") ) {
-            ret = esp_ble_gap_set_device_name( CMD_ARG_VALUE("-n") );
-        }
-        else {
-            ret = esp_ble_gap_set_device_name("ESP_CLI_BLE");
-        }
-        if (ret) {
-            cli_printf("GAP set device name failed\n");
-            return CLI_CMD_RETURN_ERROR;
         }
 
         ret = esp_ble_gap_start_advertising(&adv_params);
@@ -153,6 +153,7 @@ CLI_CMD(ble) {
     cli_printf("\n");
     cli_printf("CMD:\n");
     cli_printf("  on\n");
+    cli_printf("  adv\n");
 
     if ( argc == 1  ||  CMD_HAS_ARG_AT(1, "-h") ) {  // print usage
         return CLI_CMD_RETURN_OK;
