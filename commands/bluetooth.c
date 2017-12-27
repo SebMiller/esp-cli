@@ -39,6 +39,9 @@ static esp_ble_adv_params_t adv_params = {
     .adv_filter_policy  = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY
 };
 
+static esp_ble_adv_data_t adv_data;
+static esp_ble_adv_data_t scan_rsp_data;
+
 
 CLI_CMD(ble) {
     if ( CMD_HAS_ARG_AT(1, "on") ) {
@@ -135,7 +138,88 @@ CLI_CMD(ble) {
             cli_printf("\n");
             cli_printf("OPTION:\n");
             cli_printf("  -h: show this help.\n");
+            cli_printf("  -stop: stop advertising.\n");
+            cli_printf("  -an: advertise device name in advertisement data.\n");
+            cli_printf("  -ap: advertise TX power in advertisement data.\n");
+            cli_printf("  -ai: advertise advertising interval in advertisement data.\n");
+            cli_printf("  -sn: advertise device name in scan response data.\n");
+            cli_printf("  -sp: advertise TX power in scan response data.\n");
+            cli_printf("  -si: advertise advertising interval in scan response data.\n");
             return CLI_CMD_RETURN_OK;
+        }
+
+        if ( CMD_HAS_ARG("-stop") ) {
+            ret = esp_ble_gap_stop_advertising();
+            if (ret) {
+                cli_printf("Stop advertising failed\n");
+                return CLI_CMD_RETURN_ERROR;
+            }
+            cli_printf("Stopped advertising\n");
+            return CLI_CMD_RETURN_OK;
+        }
+
+        ret = esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P7);
+        if (ret) {
+            cli_printf("Setting adv TX power failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
+        adv_data.set_scan_rsp = false;
+        adv_data.include_name = false;
+        if ( CMD_HAS_ARG("-an") ) {
+            adv_data.include_name = true;
+        }
+        adv_data.include_txpower = false;
+        if ( CMD_HAS_ARG("-ap") ) {
+            adv_data.include_txpower = true;
+        }
+        adv_data.min_interval = 0;
+        adv_data.max_interval = 0;
+        if ( CMD_HAS_ARG("-ai") ) {
+            adv_data.min_interval = adv_params.adv_int_min;
+            adv_data.max_interval = adv_params.adv_int_max;
+        }
+        adv_data.appearance = 0;
+        adv_data.flag = ESP_BLE_ADV_FLAG_BREDR_NOT_SPT;
+        adv_data.manufacturer_len = 0;
+        adv_data.p_manufacturer_data = NULL;
+        adv_data.service_data_len = 0;
+        adv_data.p_service_data = NULL;
+        adv_data.service_uuid_len = 0;
+        adv_data.p_service_uuid = NULL;
+        ret = esp_ble_gap_config_adv_data(&adv_data);
+        if (ret) {
+            cli_printf("Setting adv data failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
+        scan_rsp_data.set_scan_rsp = true;
+        scan_rsp_data.include_name = false;
+        if ( CMD_HAS_ARG("-sn") ) {
+            scan_rsp_data.include_name = true;
+        }
+        scan_rsp_data.include_txpower = false;
+        if ( CMD_HAS_ARG("-sp") ) {
+            scan_rsp_data.include_txpower = true;
+        }
+        scan_rsp_data.min_interval = 0;
+        scan_rsp_data.max_interval = 0;
+        if ( CMD_HAS_ARG("-si") ) {
+            scan_rsp_data.min_interval = adv_params.adv_int_min;
+            scan_rsp_data.max_interval = adv_params.adv_int_max;
+        }
+        scan_rsp_data.appearance = 0;
+        scan_rsp_data.flag = 0;
+        scan_rsp_data.manufacturer_len = 0;
+        scan_rsp_data.p_manufacturer_data = NULL;
+        scan_rsp_data.service_data_len = 0;
+        scan_rsp_data.p_service_data = NULL;
+        scan_rsp_data.service_uuid_len = 0;
+        scan_rsp_data.p_service_uuid = NULL;
+        ret = esp_ble_gap_config_adv_data(&scan_rsp_data);
+        if (ret) {
+            cli_printf("Setting scan rsp data failed\n");
+            return CLI_CMD_RETURN_ERROR;
         }
 
         ret = esp_ble_gap_start_advertising(&adv_params);
