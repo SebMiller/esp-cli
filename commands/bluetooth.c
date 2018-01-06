@@ -26,6 +26,8 @@ static bool bluetooth_cmd_bluedroid_is_inited = false;
 static bool bluetooth_cmd_bluedroid_is_enabled = false;
 static bool bluetooth_cmd_gap_evt_handler_registered = false;
 
+static bool bluetooth_cmd_ble_is_advertising = false;
+
 
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 
@@ -155,6 +157,7 @@ CLI_CMD(ble) {
                 return CLI_CMD_RETURN_ERROR;
             }
             cli_printf("Stopped advertising\n");
+            bluetooth_cmd_ble_is_advertising = false;
             return CLI_CMD_RETURN_OK;
         }
 
@@ -222,10 +225,16 @@ CLI_CMD(ble) {
             return CLI_CMD_RETURN_ERROR;
         }
 
-        ret = esp_ble_gap_start_advertising(&adv_params);
-        if (ret) {
-            cli_printf("GAP start advertising failed\n");
-            return CLI_CMD_RETURN_ERROR;
+        if ( !bluetooth_cmd_ble_is_advertising ) {
+            ret = esp_ble_gap_start_advertising(&adv_params);
+            if (ret) {
+                cli_printf("GAP start advertising failed\n");
+                return CLI_CMD_RETURN_ERROR;
+            }
+            bluetooth_cmd_ble_is_advertising = true;
+        }
+        else {
+            cli_printf("Already advertising\n");
         }
 
         return CLI_CMD_RETURN_OK;
@@ -250,11 +259,11 @@ CLI_CMD(ble) {
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: {
-            cli_printf("ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT\n");
+            cli_printf("Advertisement data successfully set\n");
         }
         break;
         case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: {
-            cli_printf("ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT\n");
+            cli_printf("Scan response data successfully set\n");
         }
         break;
         case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT: {
@@ -274,7 +283,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
         }
         break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: {
-            cli_printf("ESP_GAP_BLE_ADV_START_COMPLETE_EVT\n");
+            cli_printf("Started advertising\n");
         }
         break;
         case ESP_GAP_BLE_SCAN_START_COMPLETE_EVT: {
