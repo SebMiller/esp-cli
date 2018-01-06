@@ -44,6 +44,14 @@ static esp_ble_adv_params_t adv_params = {
 static esp_ble_adv_data_t adv_data;
 static esp_ble_adv_data_t scan_rsp_data;
 
+static esp_ble_scan_params_t scan_params = {
+    .scan_type          = BLE_SCAN_TYPE_PASSIVE,
+    .own_addr_type      = BLE_ADDR_TYPE_PUBLIC,
+    .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
+    .scan_interval      = 0x0010,
+    .scan_window        = 0x0010
+};
+
 
 CLI_CMD(ble) {
     if ( CMD_HAS_ARG_AT(1, "on") ) {
@@ -239,6 +247,32 @@ CLI_CMD(ble) {
 
         return CLI_CMD_RETURN_OK;
     }
+    else if ( CMD_HAS_ARG_AT(1, "scan") ) {
+        esp_err_t ret;
+
+        if ( CMD_HAS_ARG("-h") ) {
+            cli_printf("Usage: %s %s [OPTION]...\n", argv[0], argv[1]);
+            cli_printf("Start BLE scanning.\n");
+            cli_printf("\n");
+            cli_printf("OPTION:\n");
+            cli_printf("  -h: show this help.\n");
+            return CLI_CMD_RETURN_OK;
+        }
+
+        ret = esp_ble_gap_set_scan_params(&scan_params);
+        if (ret) {
+            cli_printf("Setting scan parameters failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
+        ret = esp_ble_gap_start_scanning(30);
+        if (ret) {
+            cli_printf("Starting scan failed\n");
+            return CLI_CMD_RETURN_ERROR;
+        }
+
+        return CLI_CMD_RETURN_OK;
+    }
 
     cli_printf("Usage: %s [CMD] [OPTION]...\n", argv[0]);
     cli_printf("Control BLE.\n");
@@ -247,6 +281,7 @@ CLI_CMD(ble) {
     cli_printf("CMD:\n");
     cli_printf("  on\n");
     cli_printf("  adv\n");
+    cli_printf("  scan\n");
 
     if ( argc == 1  ||  CMD_HAS_ARG_AT(1, "-h") ) {  // print usage
         return CLI_CMD_RETURN_OK;
@@ -267,11 +302,11 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
         }
         break;
         case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT: {
-            cli_printf("ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT\n");
+            cli_printf("Scan parameters successfully set\n");
         }
         break;
         case ESP_GAP_BLE_SCAN_RESULT_EVT: {
-            cli_printf("ESP_GAP_BLE_SCAN_RESULT_EVT\n");
+            cli_printf("Scan result #%d: %02X:%02X:%02X:%02X:%02X:%02X\n", param->scan_rst.num_resps, param->scan_rst.bda[0], param->scan_rst.bda[1], param->scan_rst.bda[2], param->scan_rst.bda[3], param->scan_rst.bda[4], param->scan_rst.bda[5]);
         }
         break;
         case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT: {
@@ -287,7 +322,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
         }
         break;
         case ESP_GAP_BLE_SCAN_START_COMPLETE_EVT: {
-            cli_printf("ESP_GAP_BLE_SCAN_START_COMPLETE_EVT\n");
+            cli_printf("Scan started\n");
         }
         break;
         case ESP_GAP_BLE_AUTH_CMPL_EVT: {
